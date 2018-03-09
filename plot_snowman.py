@@ -2,7 +2,6 @@ import tregex
 import datetime
 from math import fmod, floor
 
-
 guess = '''runarws,08.03.2018 08:00
 tiram1990,09.03.2018 09:03:18
 linetysdahl,09.03.2018 11:00
@@ -19,11 +18,11 @@ broxplots,14.03.2018 12:00
 c.aanerud,15.03.2018 14:30'''
 
 guess = guess.split('\n')
-start_day = datetime.datetime(2018,3,7,0,0,0)
+start_day = datetime.datetime(2018, 3, 7, 0, 0, 0)
 parsed = []
 time_format = '%d.%m.%Y %H:%M:%S'
 now = datetime.datetime.now()
-day_diff = (now-start_day).days
+day_diff = (now - start_day).days
 
 for g in guess:
     parse = tregex.name('^(?P<name>.*?),(?P<time>\d.*\d)$', g)[0]
@@ -31,20 +30,53 @@ for g in guess:
         parse['time'] = datetime.datetime.strptime(parse['time'], '%d.%m.%Y %H:%M')
     except:
         parse['time'] = datetime.datetime.strptime(parse['time'], time_format)
-    parse['diff'] = (now-parse['time']).total_seconds()
+    parse['diff'] = (now - parse['time']).total_seconds()
     parse['abs_diff'] = abs(parse['diff'])
     parsed += [parse]
 
 parsed = sorted(parsed, key=lambda x: x['diff'], reverse=True)
 
+# Calculate split_times:
+previous = None
+for current in parsed:
+    if previous:
+        diff = current['time'] - previous['time']
+        split_time = previous['time'] + diff / 2
+        current['split_time'] = split_time
+
+        # Get timespan:
+        if 'split_time' in previous:
+            current['timespan'] = current['split_time'] - previous['split_time']
+
+    previous = current
+
+
 def get_name(items):
     if not items:
         return 'ingen'
     else:
-        return '@'+', @'.join([i['name'] for i in items])
+        return '@' + ', @'.join([i['name'] for i in items])
+
+
+def get_split_time_as_str(user):
+    if not 'split_time' in user:
+        return '∞'
+    else:
+        return user['split_time'].strftime('%d.%m %H:%M:%S')
+
+
+def get_timespan_as_str(user):
+    if not 'timespan' in user:
+        return '∞'
+    tot = user['timespan'].total_seconds()
+    hours = floor(tot / 3600)
+    minutes = floor(fmod(tot, 3600) / 60)
+    seconds = fmod(tot, 60)
+    return f'{hours:02d}:{minutes:02d}:{seconds:02.0f}'
+
 
 closest = [min(parsed, key=lambda x: x['abs_diff'])]
-out = [candidate for candidate in parsed if candidate['diff']>0 and candidate not in closest]
+out = [candidate for candidate in parsed if candidate['diff'] > 0 and candidate not in closest]
 rest = [candidate for candidate in parsed if not candidate in closest + out]
 print(f'Dag {day_diff}: Snømannen står fremdeles!\n'
       f'Men hvis snømannen faller NÅ, så er:\n'
@@ -54,22 +86,9 @@ print(f'Dag {day_diff}: Snømannen står fremdeles!\n'
       f'#harsnømannenfalt')
 
 timesplit = []
-previous = closest[0]
-for current in rest:
-    diff = current['time'] - previous['time']
-    split_time = previous['time'] + diff/2
-
-    tot = diff.total_seconds()
-    hours = floor(tot / 3600)
-    minutes = floor(fmod(tot, 3600) / 60)
-    seconds = fmod(tot, 60)
-    timesplit += [f'    {hours:02d}:{minutes:02d}:{seconds:02.0f}']
-    timesplit += ['{} - {}'.format(split_time.strftime('%d.%m %H:%M:%S'),'@'+current['name'])]
-    previous = current
+for user in parsed:
+    timesplit += [get_timespan_as_str(user)]
+    timesplit += ['{} - {}'.format(get_split_time_as_str(user), '@' + user['name'])]
 
 for p in timesplit:
     print(p)
-
-
-
-
