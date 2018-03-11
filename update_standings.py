@@ -51,21 +51,21 @@ for current in parsed:
     previous = current
 
 
-def get_name(items):
+def _get_name(items):
     if not items:
         return 'ingen'
     else:
         return '@' + ', @'.join([i['name'] for i in items])
 
 
-def get_split_time_as_str(user):
+def _get_split_time_as_str(user):
     if not 'split_time' in user:
         return '∞'
     else:
         return user['split_time'].strftime('%d.%m %H:%M:%S')
 
 
-def get_timespan_as_str(user):
+def _get_timespan_as_str(user):
     if not 'timespan' in user:
         return '∞'
     tot = user['timespan'].total_seconds()
@@ -81,16 +81,16 @@ def print_standings():
     rest = [candidate for candidate in parsed if not candidate in closest + out]
     print(f'Dag {day_diff}: Snømannen står fremdeles!\n'
           f'Men hvis snømannen faller NÅ, så er:\n'
-          f'Nærmest: {get_name(closest)}\n'
-          f'Resten (kronologisk): {get_name(rest)}\n'
-          f'Ute av gamet: {get_name(out)}\n'
+          f'Nærmest: {_get_name(closest)}\n'
+          f'Resten (kronologisk): {_get_name(rest)}\n'
+          f'Ute av gamet: {_get_name(out)}\n'
           f'#harsnømannenfalt')
 
 def print_split_times():
     timesplit = []
     for user in parsed:
-        timesplit += [get_timespan_as_str(user)]
-        timesplit += ['{} - {}'.format(get_split_time_as_str(user), '@' + user['name'])]
+        timesplit += [_get_timespan_as_str(user)]
+        timesplit += ['{} - {}'.format(_get_split_time_as_str(user), '@' + user['name'])]
 
     for p in timesplit:
         print(p)
