@@ -75,20 +75,25 @@ def get_timespan_as_str(user):
     return f'{hours:02d}:{minutes:02d}:{seconds:02.0f}'
 
 
-closest = [min(parsed, key=lambda x: x['abs_diff'])]
-out = [candidate for candidate in parsed if candidate['diff'] > 0 and candidate not in closest]
-rest = [candidate for candidate in parsed if not candidate in closest + out]
-print(f'Dag {day_diff}: Snømannen står fremdeles!\n'
-      f'Men hvis snømannen faller NÅ, så er:\n'
-      f'Nærmest: {get_name(closest)}\n'
-      f'Resten (kronologisk): {get_name(rest)}\n'
-      f'Ute av gamet: {get_name(out)}\n'
-      f'#harsnømannenfalt')
+def print_standings():
+    closest = [min(parsed, key=lambda x: x['abs_diff'])]
+    out = sorted([candidate for candidate in parsed if candidate['diff'] > 0 and candidate not in closest], key= lambda x: x['diff'])
+    rest = [candidate for candidate in parsed if not candidate in closest + out]
+    print(f'Dag {day_diff}: Snømannen står fremdeles!\n'
+          f'Men hvis snømannen faller NÅ, så er:\n'
+          f'Nærmest: {get_name(closest)}\n'
+          f'Resten (kronologisk): {get_name(rest)}\n'
+          f'Ute av gamet: {get_name(out)}\n'
+          f'#harsnømannenfalt')
 
-timesplit = []
-for user in parsed:
-    timesplit += [get_timespan_as_str(user)]
-    timesplit += ['{} - {}'.format(get_split_time_as_str(user), '@' + user['name'])]
+def print_split_times():
+    timesplit = []
+    for user in parsed:
+        timesplit += [get_timespan_as_str(user)]
+        timesplit += ['{} - {}'.format(get_split_time_as_str(user), '@' + user['name'])]
 
-for p in timesplit:
-    print(p)
+    for p in timesplit:
+        print(p)
+
+if __name__ == '__main__':
+    print_standings()
