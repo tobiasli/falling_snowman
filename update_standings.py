@@ -19,10 +19,12 @@ c.aanerud,15.03.2018 14:30'''
 
 guess = guess.split('\n')
 start_day = datetime.datetime(2018, 3, 7, 0, 0, 0)
+fall_day = datetime.datetime(2018, 3, 11, 13, 47, 00)
 parsed = []
 time_format = '%d.%m.%Y %H:%M:%S'
 now = datetime.datetime.now()
 day_diff = (now - start_day).days
+column_widths = [3, 17, 6]
 
 for g in guess:
     parse = tregex.name('^(?P<name>.*?),(?P<time>\d.*\d)$', g)[0]
@@ -63,15 +65,19 @@ def _get_split_time_as_str(user):
         return '∞'
     else:
         return user['split_time'].strftime('%d.%m %H:%M:%S')
+        
+def _get_hms_from_timedelta(timedelta):
+    tot = timedelta.total_seconds()
+    hours = floor(tot / 3600)
+    minutes = floor(fmod(tot, 3600) / 60)
+    seconds = fmod(tot, 60)
+    return hours, abs(minutes), abs(seconds)
 
 
 def _get_timespan_as_str(user):
     if not 'timespan' in user:
         return '∞'
-    tot = user['timespan'].total_seconds()
-    hours = floor(tot / 3600)
-    minutes = floor(fmod(tot, 3600) / 60)
-    seconds = fmod(tot, 60)
+    hours, minuts, seconds = _get_hms_from_timedelta(user['timespan'])
     return f'{hours:02d}:{minutes:02d}:{seconds:02.0f}'
 
 
@@ -94,6 +100,27 @@ def print_split_times():
 
     for p in timesplit:
         print(p)
+        
+def get_final_standing():
+    if not fall_day:
+        return 'Snowman has not fallen'
+    else:
+        # Calculate fall diff:
+        final = []
+        for user in parsed:
+            user['fall_diff'] = user['time'] - fall_day
+            final += [user]
+        final = sorted(final, key=lambda x: abs(x['fall_diff']))
+        
+        for rank, user in enumerate(final):
+            username = user['name']
+            hours, minutes, seconds = _get_hms_from_timedelta(user['fall_diff'])
+            row = [str(rank+1), f'@{username}', f'{hours:+03d}:{minutes:02d}']
+            print("".join([word.ljust(width) for word, width in zip(row, column_widths)]))
+            
+        
 
 if __name__ == '__main__':
     print_standings()
+    print('\n')
+    get_final_standing()
